@@ -1,125 +1,122 @@
-import re
 import csv
+import re
 import os
 
-def search_log_file_single(log_file_path, word1, word2):
-    
-    with open(log_file_path, 'r') as log_file:
-        for line in log_file:
-            if re.search(r'\bEVENT  : ClientManager::sendFplMessage client -clientMAHB- sessionId -\b', line):
-                client_id_match = re.search(r'sessionId -(.*?)-', line)
-                client_id = client_id_match.group(1)
-                               
-                    
-                    
-            # Using regular expression to check if both words are present in the line
-            if re.search(fr'\b{word1}\b', line) and re.search(fr'\b{word2}\b', line):
-                # Use regular expressions to extract required information
-                date_time_match = re.search(r'\[(.*?)\]', line)
-                session_id_match = re.search(r'sessionId -(.*?)-', line) 
-                dep_rwy_match = re.search(r'DRW="(.*?)"', line)
-                dep_seq_match = re.search (r'DSN="(.*?)"', line)
-                eobt_match = re.search (r'EOBT="(.*?)"', line)
-                cs_match = re.search (r'IDT="(.*?)"', line)
-                pkb_match = re.search (r'PKB="(.*?)"', line)
-                tobt_match = re.search (r'TOBT="(.*?)"', line)
-                tsat_match = re.search (r'TSAT="(.*?)"', line)
-                ttot_match = re.search (r'TTOT="(.*?)"', line)
-                session_id = session_id_match.group(1)
-                tobt_rx = ''
-                asat = ''
-                if client_id == session_id:
+def search_log(filePath):
 
+# Initialize variables to track the block of interest
+    block_started = False
+    date_time = []
+    rwy = []
+    # Read the log data from the text file
+    with open(filePath, 'r') as file:
+        for line in file:
+            if re.search(fr'\bcreateSequenceMessage\b', line) and block_started == False:
+                block_started = True
+            if block_started is True:
+                if re.search(fr'\bcreateSequenceMessage\b', line):
+                    date_time = re.search(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}', line)
+                    date_time = date_time.group(0) 
+                    print(date_time)
+                if re.search(fr'\bRunway\b', line):
+                    rwy = re.search(r'Runway:(.*)', line)
+                    rwy = rwy.group(1)
+                    print(rwy)
+                if re.search(r'\-Id', line):
+                    if re.search(r'\bCAT:D', line):
+                        lineSplit = line.split()
+                        id = lineSplit[0]
+                        id = id.split(':')
+                        id = id[1]
+                        cs = lineSplit[1]
+                        cs = cs.split(':')
+                        cs = cs[1]
+                        cat = lineSplit[2]
+                        cat = cat.split(':')
+                        cat = cat[1]
+                        wtc = lineSplit[3]
+                        wtc = wtc.split(':')
+                        wtc = wtc[1]
+                        tobt = lineSplit[4]
+                        tobt = re.search(r'\d{2}:\d{2}:\d{2}', tobt)
+                        tobt = tobt.group(0)
+                        tsat = lineSplit[5]
+                        tsat = re.search(r'\d{2}:\d{2}:\d{2}', tsat)
+                        tsat = tsat.group(0)
+                        taxi = lineSplit[6]
+                        taxi = taxi.split(':')
+                        taxi = taxi[1]
+                        ttot = lineSplit[7]
+                        ttot =re.search(r'\d{2}:\d{2}:\d{2}', ttot)
+                        ttot = ttot.group(0)
+                        eta = ''
+                        sta = ''
+                        try:
+                            remark = lineSplit[8] + lineSplit[9]
+                        except:
+                            remark = ''
+                        store_result(date_time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark)
+                    else:
+                        lineSplit = line.split()
+                        id = lineSplit[0]
+                        id = id.split(':')
+                        id = id[1]
+                        cs = lineSplit[1]
+                        cs = cs.split(':')
+                        cs = cs[1]
+                        cat = lineSplit[2]
+                        cat = cat.split(':')
+                        cat = cat[1]
+                        eta = lineSplit[3]
+                        eta = re.search(r'\d{2}:\d{2}:\d{2}', eta)
+                        eta = eta.group(0)
+                        sta = lineSplit[4]
+                        sta = re.search(r'\d{2}:\d{2}:\d{2}', sta)
+                        sta = sta.group(0)
+                        wtc = ''
+                        tobt = ''
+                        tsat = ''
+                        taxi = ''
+                        ttot = ''
+                        store_result(date_time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark)
+            if re.search(fr'  o', line):
+                block_started=False 
+        
+def file_sort(cur_dir):
 
-                
+    files = os.listdir(cur_dir)
+    file_time = [(file, os.path.getmtime(os.path.join(cur_dir, file))) for file in files]
+    sort = sorted(file_time, key=lambda x: x[1], reverse=False)
+    sorted_file = [file[0] for file in sort]    
+    return sorted_file
 
-                    if date_time_match and session_id_match and dep_rwy_match and dep_seq_match and eobt_match and cs_match and pkb_match and tobt_match and tsat_match and ttot_match:
-                        date_time = date_time_match.group(1)
-                        date_time = date_time.split('.')[0]
-      
-                        drw = dep_rwy_match.group(1)
-                        dsn = dep_seq_match.group(1)
-                        eobt = eobt_match.group(1)
-                        idt = cs_match.group(1)
-                        pkb = pkb_match.group(1)
-                        tobt = tobt_match.group(1)
-                        tsat = tsat_match.group(1)
-                        ttot = ttot_match.group(1)
+def store_result(date_time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark):
+    data = [date_time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark]
+    # Specify the CSV file path
+    date = date_time.split()
+    date = date[0]
+    csv_file_path = f'{date}_DMAN_sequence.csv'
+    # Check if the file exists
+    is_new_file = not os.path.isfile(csv_file_path)
 
-                         
+    # Write the data to the CSV file
+    with open(csv_file_path, mode='a', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file)
 
-                        if eobt != '':
-                            eobt1 = eobt[:8]
-                            eobt2 = eobt[8:]
-                            eobt = f'{eobt1} {eobt2}'
-                            #eobt = eobt+'UTC'
+        if is_new_file:
+            header = ["Timestamp", "Runway", "Sequence", "Callsign", "Category", "WTC", "TOBT", "TSAT", "TTOT", "ETA", "STA", "Remark"]
+            print(header)
+            csv_writer.writerow(header)
 
-                        if tobt != '':
-                            tobt1 = tobt[:8]
-                            tobt2 = tobt[8:]
-                            tobt = f'{tobt1} {tobt2}'                        
-                            #tobt = tobt+'UTC'
+        csv_writer.writerow(data)
 
-                        if tsat != '':
-                            tsat1 = tsat[:8]
-                            tsat2 = tsat[8:]
-                            tsat = f'{tsat1} {tsat2}'                        
-                            #tsat = tsat+'UTC'
+        print(f"{data}")
+# print(os.getcwd()+'/LOG')
+log_path = os.getcwd() +'/DMAN/LOG/'
+print(log_path)
+print(os.listdir(log_path))
+sorted_files = file_sort(log_path)
+for log in sorted_files:
+    print(log)
+    search_log(log_path + log)
 
-                        if ttot != '':
-                            ttot1 = ttot[:8]
-                            ttot2 = ttot[8:]
-                            ttot = f'{ttot1} {ttot2}'                         
-                           # ttot = ttot+'UTC'
-                        store_result(date_time, idt, dsn, eobt, tobt_rx, tobt, tsat, ttot, drw, pkb, asat)
-                else:
-                    print('Client Not Found')  
-                    
-            if re.search(fr'\bEVENT\b', line) and re.search(fr'\bFPLAODB\b', line) and re.search(fr'\b{word1}\b', line) and re.search(fr'\bTOBT\b', line):
-                date_time_match = re.search(r'\[(.*?)\]', line)
-                cs_match = re.search (r'IDT="(.*?)"', line)
-                tobt_rx_match = re.search(r'TOBT="(.*?)"', line)
-#                if date_time_match and cs_match and tobt_rx_match:
-                date_time = date_time_match.group(1)
-                date_time = date_time.split('.')[0]
-                idt = cs_match.group(1)
-                tobt_rx = tobt_rx_match.group(1)
-                drw = ''
-                dsn = ''
-                eobt = ''
-                pkb = ''
-                tobt = ''
-                tsat = ''
-                ttot = ''
-                asat = ''
-                if tobt_rx != '':
-                    tobt_rx1 = tobt_rx[:8]
-                    tobt_rx2 = tobt_rx[8:]
-                    tobt_rx = f'{tobt_rx1} {tobt_rx2}'
-                        
-                store_result(date_time, idt, dsn, eobt, tobt_rx, tobt, tsat, ttot, drw, pkb, asat)
-
-
-            if re.search(fr'\bEVENT\b', line) and re.search(fr'\bFPLAODB\b', line) and re.search(fr'\b{word1}\b', line) and re.search(fr'\bRSC\b', line) and re.search(fr'\bAOBT\b', line):
-                date_time_match = re.search(r'\[(.*?)\]', line)
-                cs_match = re.search (r'IDT="(.*?)"', line)
-                asat_rx_match = re.search(r'RSC="(.*?)"', line)
-#                if date_time_match and cs_match and tobt_rx_match:
-                date_time = date_time_match.group(1)
-                date_time = date_time.split('.')[0]
-                idt = cs_match.group(1)
-                asat = asat_rx_match.group(1)
-                tobt_rx = ''
-                drw = ''
-                dsn = ''
-                eobt = ''
-                pkb = ''
-                tobt = ''
-                tsat = ''
-                ttot = ''
-                if asat != '':
-                    asat1 = asat[:8]
-                    asat2 = asat[8:]
-                    asat = f'{asat1} {asat2}'
-                        
-                store_result(date_time, idt, dsn, eobt, tobt_rx, tobt, tsat, ttot, drw, pkb, asat)
