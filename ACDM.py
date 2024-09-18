@@ -35,13 +35,18 @@ def search_log_file_single(log_file_path, word1, word2):
                 tobt_match = re.search (r'TOBT="(.*?)"', line)
                 tsat_match = re.search (r'TSAT="(.*?)"', line)
                 ttot_match = re.search (r'TTOT="(.*?)"', line)
+                aobt_match = re.search (r'AOBT="(.*?)"', line)
+                dep_match = re.search (r'DEP="(.*?)"', line)
+                arr_match = re.search (r'ARR="(.*?)"', line)
+                reg_match = re.search (r'REG="(.*?)"', line)
+                etd_match = re.search (r'ETD="(.*?)"', line)
+                ctot_match = re.search (r'CTOT="(.*?)"', line)
                 session_id = session_id_match.group(1)
                 tobt_rx = ''
                 asat = ''
+                aobt = ''
                 if client_id == session_id:
-
-
-                
+               
 
                     if date_time_match and session_id_match and dep_rwy_match and dep_seq_match and eobt_match and cs_match and pkb_match and tobt_match and tsat_match and ttot_match:
                         date_time = date_time_match.group(1)
@@ -54,9 +59,13 @@ def search_log_file_single(log_file_path, word1, word2):
                         pkb = pkb_match.group(1)
                         tobt = tobt_match.group(1)
                         tsat = tsat_match.group(1)
-                        ttot = ttot_match.group(1)
-
-                         
+                        ttot = ttot_match.group(1) 
+                        dep = dep_match.group(1)
+                        arr = arr_match.group(1)
+                        reg = reg_match.group(1)
+                        etd = etd_match.group(1)
+                        ctot = ctot_match.group(1)
+                                                
 
                         if eobt != '':
                             eobt1 = eobt[:8]
@@ -81,7 +90,16 @@ def search_log_file_single(log_file_path, word1, word2):
                             ttot2 = ttot[8:]
                             ttot = f'{ttot1} {ttot2}'                         
                            # ttot = ttot+'UTC'
-                        store_result(date_time, idt, dsn, eobt, tobt_rx, tobt, tsat, ttot, drw, pkb, asat)
+                        if etd != '':
+                            etd1 = etd[:8]
+                            etd2 = etd[8:]
+                            etd = f'{etd1} {etd2}'
+                        
+                        if ctot != '':
+                            ctot1 = ctot[:8]
+                            ctot2 = ctot[8:]
+                            ctot = f'{ctot1} {ctot2}'
+                        store_result(date_time, idt, reg, dep, arr, dsn, etd, eobt, tobt_rx, tobt, tsat, ttot, ctot, drw, pkb, asat, aobt)
                 else:
                     print('Client Not Found')  
                     
@@ -102,12 +120,19 @@ def search_log_file_single(log_file_path, word1, word2):
                 tsat = ''
                 ttot = ''
                 asat = ''
+                reg = ''
+                arr = ''
+                dep = ''
+                etd = ''
+                ctot = ''
+                aobt = ''
+                
                 if tobt_rx != '':
                     tobt_rx1 = tobt_rx[:8]
                     tobt_rx2 = tobt_rx[8:]
                     tobt_rx = f'{tobt_rx1} {tobt_rx2}'
                         
-                store_result(date_time, idt, dsn, eobt, tobt_rx, tobt, tsat, ttot, drw, pkb, asat)
+                store_result(date_time, idt, reg, dep, arr, dsn, etd, eobt, tobt_rx, tobt, tsat, ttot, ctot, drw, pkb, asat, aobt)
 
 
             if re.search(fr'\bEVENT\b', line) and re.search(fr'\bFPLAODB\b', line) and re.search(fr'\b{word1}\b', line) and re.search(fr'\bRSC\b', line) and re.search(fr'\bAOBT\b', line):
@@ -127,29 +152,32 @@ def search_log_file_single(log_file_path, word1, word2):
                 tobt = ''
                 tsat = ''
                 ttot = ''
+                ctot = ''
+                etd = ''
                 if asat != '':
                     asat1 = asat[:8]
                     asat2 = asat[8:]
                     asat = f'{asat1} {asat2}'
+                
+                if aobt != '':
+                    aobt1 = aobt[:8]
+                    aobt2 = aobt[8:]
+                    aobt = f'{aobt1} {aobt2}'
                         
-                store_result(date_time, idt, dsn, eobt, tobt_rx, tobt, tsat, ttot, drw, pkb, asat)
+                store_result(date_time, idt, reg, dep, arr, dsn, etd, eobt, tobt_rx, tobt, tsat, ttot, ctot, drw, pkb, asat, aobt)
 
-def store_result(date_time, idt, dsn, eobt, tobt_rx, tobt, tsat, ttot, drw, pkb, asat):
+def store_result(date_time, idt, reg, dep, arr, dsn, etd, eobt, tobt_rx, tobt, tsat, ttot, ctot, drw, pkb, asat, aobt):
 # Create a list with the extracted information
-    data = [date_time, idt, dsn, eobt, tobt_rx, tobt, tsat, ttot, drw, pkb, asat]
+    data = [date_time, idt, reg, dep, arr, dsn, etd, eobt, tobt_rx, tobt, tsat, ttot, ctot, drw, pkb, asat, aobt]
 
 
 
     # Specify the CSV file path
     callsign = idt.split()
     callsign = callsign[0]
-    #try: 
-    #    date = eobt.split()
-    #    date = date[0]
-    #except:
-    #    date = date
+    #timestamp = eobt.split()
+    #timestamp = timestamp[0]
     csv_file_path = f'{callsign}_data.csv'
-    #csv_file_path = f'{callsign}_{date}.csv'
     # Check if the file exists
     is_new_file = not os.path.isfile(csv_file_path)
 
@@ -158,7 +186,7 @@ def store_result(date_time, idt, dsn, eobt, tobt_rx, tobt, tsat, ttot, drw, pkb,
         csv_writer = csv.writer(csv_file)
 
         if is_new_file:
-            header = ["Timestamp", "IDT", "DSN", "EOBT", "TOBT RX", "TOBT", "TSAT", "TTOT", "DRW", "PKB", "ASAT"]
+            header = ["Timestamp", "IDT", "REG", "DEP", "ARR", "DSN", "ETD", "EOBT", "TOBT RX", "TOBT", "TSAT", "TTOT", "CTOT", "DRW", "PKB", "ASAT", "AOBT"]
             print(header)
             csv_writer.writerow(header)
 
