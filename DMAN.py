@@ -8,6 +8,7 @@ def search_log(filePath):
     block_started = False
     date_time = []
     rwy = []
+    remark = ''
     # Read the log data from the text file
     with open(filePath, 'r') as file:
         for line in file:
@@ -16,12 +17,10 @@ def search_log(filePath):
             if block_started is True:
                 if re.search(fr'\bcreateSequenceMessage\b', line):
                     date_time = re.search(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}', line)
-                    date_time = date_time.group(0) 
-                    print(date_time)
+                    date_time = date_time.group(0)
                 if re.search(fr'\bRunway\b', line):
                     rwy = re.search(r'Runway:(.*)', line)
                     rwy = rwy.group(1)
-                    print(rwy)
                 if re.search(r'\-Id', line):
                     if re.search(r'\bCAT:D', line):
                         lineSplit = line.split()
@@ -79,8 +78,10 @@ def search_log(filePath):
                         taxi = ''
                         ttot = ''
                         store_result(date_time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark)
-            if re.search(fr'  o', line):
-                block_started=False 
+                if re.search(fr'  o', line):
+                    block_started=False
+                    id = ''; cs = ''; cat = ''; wtc = ''; tobt = ''; tsat = ''; taxi = ''; ttot = ''; eta = ''; sta = ''; remark = '';
+                    store_result(date_time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark)
         
 def file_sort(cur_dir):
 
@@ -91,10 +92,12 @@ def file_sort(cur_dir):
     return sorted_file
 
 def store_result(date_time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark):
-    data = [date_time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark]
+
     # Specify the CSV file path
-    date = date_time.split()
-    date = date[0]
+    dateSplit = date_time.split()
+    date = dateSplit[0]
+    time = dateSplit[1]
+    data = [time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark]
     csv_file_path = f'{date}_DMAN_sequence.csv'
     # Check if the file exists
     is_new_file = not os.path.isfile(csv_file_path)
@@ -104,19 +107,16 @@ def store_result(date_time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, 
         csv_writer = csv.writer(csv_file)
 
         if is_new_file:
-            header = ["Timestamp", "Runway", "Sequence", "Callsign", "Category", "WTC", "TOBT", "TSAT", "TTOT", "ETA", "STA", "Remark"]
+            header = ["Timestamp", "Runway", "Sequence No", "Callsign", "Category", "WTC", "TOBT", "TSAT", "TAXI", "TTOT", "ETA", "STA", "Remark"]
             print(header)
             csv_writer.writerow(header)
 
         csv_writer.writerow(data)
 
         print(f"{data}")
-# print(os.getcwd()+'/LOG')
-log_path = os.getcwd() +'/DMAN/LOG/'
-print(log_path)
-print(os.listdir(log_path))
+log_path = os.getcwd() +'\\LOG\\'
 sorted_files = file_sort(log_path)
 for log in sorted_files:
-    print(log)
     search_log(log_path + log)
+os.system("pause")
 
