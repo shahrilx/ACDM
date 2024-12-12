@@ -6,12 +6,10 @@ import os
 
 def search_log(filePath):
 
-# Initialize variables to track the block of interest
     block_started = False
     date_time = []
     rwy = []
     remark = ''
-    # Read the log data from the text file
     with open(filePath, 'r') as file:
         for line in file:
             if re.search(fr'\bcreateSequenceMessage\b', line) and block_started == False:
@@ -95,16 +93,14 @@ def file_sort(cur_dir):
 
 def store_result(date_time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark):
 
-    # Specify the CSV file path
     dateSplit = date_time.split()
     date = dateSplit[0]
     time = dateSplit[1]
     data = [time, rwy, id, cs, cat, wtc, tobt, tsat, taxi, ttot, eta, sta, remark]
     csv_file_path = f'{date}_DMAN_sequence.csv'
-    # Check if the file exists
+
     is_new_file = not os.path.isfile(csv_file_path)
 
-    # Write the data to the CSV file
     with open(csv_file_path, mode='a', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
 
