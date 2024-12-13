@@ -4,6 +4,8 @@ If you want to run this on linux you need to change the directory format inside 
  
 DMAN.py
 
-1. log_path = os.getcwd() +'/DMAN/LOG/' # change this path according to linux format
-2. create a directory according to the path for example DMAN/LOG or according to your preference by changing the directory name in the script
-3. put the DMAN log inside LOG folder(the script arrange the log according to time) and run the script.
+1. log_path = os.getcwd() +'/LOG/' # change this path according to linux format
+2. create a directory according to the path for example /LOG or according to your preference by changing the directory name in the script
+3. put the script into created folder
+4. put the DMAN log inside 'LOG' folder(the script arrange the log according to time)
+5. run the script.
