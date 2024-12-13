@@ -1,4 +1,4 @@
-This script only run on windows OS an require Python 2 and later installed.
+This script only run on windows OS and require Python 2 and later installed.
 
 If you want to run this on linux you need to change the directory format inside the script according to the operating system
  
